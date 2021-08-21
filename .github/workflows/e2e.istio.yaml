@@ -103,7 +103,7 @@ jobs:
                --set ui.image.tag=$TAG \
                --set oap.image.tag=$TAG \
                --set oap.image.repository=skywalking/oap \
-               --set oap.storageType=elasticsearch7
+               --set oap.storageType=elasticsearch
           kubectl -n istio-system get pods
 
           sleep 3
@@ -233,7 +233,7 @@ jobs:
                --set ui.image.tag=$TAG \
                --set oap.image.tag=$TAG \
                --set oap.image.repository=skywalking/oap \
-               --set oap.storageType=elasticsearch7
+               --set oap.storageType=elasticsearch
           kubectl -n istio-system get pods
 
           sleep 3

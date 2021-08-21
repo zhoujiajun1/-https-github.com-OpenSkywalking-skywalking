@@ -1,6 +1,5 @@
 HdrHistogram-2.1.9.jar
 HikariCP-3.1.0.jar
-aggs-matrix-stats-client-6.3.2.jar
 animal-sniffer-annotations-1.18.jar
 annotations-13.0.jar
 antlr4-runtime-4.7.1.jar
@@ -32,13 +31,6 @@ curator-client-4.3.0.jar
 curator-framework-4.3.0.jar
 curator-recipes-4.3.0.jar
 curator-x-discovery-4.3.0.jar
-elasticsearch-6.3.2.jar
-elasticsearch-cli-6.3.2.jar
-elasticsearch-core-6.3.2.jar
-elasticsearch-rest-client-6.3.2.jar
-elasticsearch-rest-high-level-client-6.3.2.jar
-elasticsearch-secure-sm-6.3.2.jar
-elasticsearch-x-content-6.3.2.jar
 error_prone_annotations-2.3.2.jar
 failsafe-2.3.4.jar
 failureaccess-1.0.1.jar
@@ -142,13 +134,11 @@ netty-transport-native-epoll-4.1.65.Final.jar
 netty-transport-native-unix-common-4.1.65.Final.jar
 okhttp-3.14.9.jar
 okio-1.17.2.jar
-parent-join-client-6.3.2.jar
 perfmark-api-0.19.0.jar
 postgresql-42.2.18.jar
 proto-google-common-protos-1.17.0.jar
 protobuf-java-3.13.0.jar
 protobuf-java-util-3.12.4.jar
-rank-eval-client-6.3.2.jar
 reactive-streams-1.0.2.jar
 reflectasm-1.11.7.jar
 retrofit-2.5.0.jar

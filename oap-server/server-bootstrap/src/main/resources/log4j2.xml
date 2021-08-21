@@ -26,8 +26,6 @@
     <Loggers>
         <logger name="org.eclipse.jetty" level="INFO"/>
         <logger name="org.apache.zookeeper" level="INFO"/>
-        <logger name="org.elasticsearch.common.network.IfConfig" level="INFO"/>
-        <logger name="org.elasticsearch.client.RestClient" level="INFO"/>
         <logger name="io.grpc.netty" level="INFO"/>
         <logger name="io.netty" level="INFO"/>
         <logger name="org.apache.http" level="INFO"/>
@@ -39,6 +37,7 @@
         <logger name="org.apache.skywalking.oap.server.library.buffer" level="INFO"/>
         <logger name="org.apache.skywalking.oap.server.receiver.envoy.MetricServiceGRPCHandler" level="INFO"/>
         <logger name="org.apache.skywalking.oap.meter.analyzer.prometheus.PrometheusMetricConverter" level="INFO"/>
+        <logger name="org.elasticsearch.client" level="TRACE"/>
         <Root level="DEBUG">
             <AppenderRef ref="Console"/>
         </Root>

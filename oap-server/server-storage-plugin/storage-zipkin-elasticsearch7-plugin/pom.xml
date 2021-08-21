@@ -26,20 +26,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>storage-zipkin-elasticsearch7-plugin</artifactId>
-    <properties>
-        <elasticsearch.version>7.5.0</elasticsearch.version>
-    </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.skywalking</groupId>
-            <artifactId>storage-elasticsearch7-plugin</artifactId>
+            <artifactId>library-elasticsearch-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.version}</version>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>storage-elasticsearch-plugin</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.zipkin.zipkin2</groupId>

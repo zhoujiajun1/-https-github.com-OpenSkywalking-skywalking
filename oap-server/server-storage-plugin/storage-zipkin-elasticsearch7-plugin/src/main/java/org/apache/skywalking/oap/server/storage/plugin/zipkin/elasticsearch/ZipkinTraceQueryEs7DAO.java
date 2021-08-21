@@ -25,6 +25,14 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import org.apache.skywalking.apm.util.StringUtil;
+import org.apache.skywalking.library.elasticsearch.requests.search.BoolQueryBuilder;
+import org.apache.skywalking.library.elasticsearch.requests.search.Query;
+import org.apache.skywalking.library.elasticsearch.requests.search.RangeQueryBuilder;
+import org.apache.skywalking.library.elasticsearch.requests.search.Search;
+import org.apache.skywalking.library.elasticsearch.requests.search.SearchBuilder;
+import org.apache.skywalking.library.elasticsearch.requests.search.Sort;
+import org.apache.skywalking.library.elasticsearch.response.search.SearchHit;
+import org.apache.skywalking.library.elasticsearch.response.search.SearchResponse;
 import org.apache.skywalking.oap.server.core.analysis.IDManager;
 import org.apache.skywalking.oap.server.core.analysis.manual.searchtag.Tag;
 import org.apache.skywalking.oap.server.core.analysis.manual.segment.SegmentRecord;
@@ -42,14 +50,6 @@ import org.apache.skywalking.oap.server.library.util.BooleanUtils;
 import org.apache.skywalking.oap.server.library.util.CollectionUtils;
 import org.apache.skywalking.oap.server.storage.plugin.elasticsearch.base.EsDAO;
 import org.apache.skywalking.oap.server.storage.plugin.zipkin.ZipkinSpanRecord;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import zipkin2.Span;
 import zipkin2.codec.SpanBytesDecoder;
 
@@ -83,76 +83,72 @@ public class ZipkinTraceQueryEs7DAO extends EsDAO implements ITraceQueryDAO {
                                        TraceState traceState,
                                        QueryOrder queryOrder,
                                        final List<Tag> tags) throws IOException {
-
-        SearchSourceBuilder sourceBuilder = SearchSourceBuilder.searchSource();
-
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        sourceBuilder.query(boolQueryBuilder);
-        List<QueryBuilder> mustQueryList = boolQueryBuilder.must();
+        final BoolQueryBuilder bool = Query.bool();
 
         if (startSecondTB != 0 && endSecondTB != 0) {
-            mustQueryList.add(QueryBuilders.rangeQuery(TIME_BUCKET).gte(startSecondTB).lte(endSecondTB));
+            bool.must(Query.range(TIME_BUCKET).gte(startSecondTB).lte(endSecondTB));
         }
 
         if (minDuration != 0 || maxDuration != 0) {
-            RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery(LATENCY);
+            final RangeQueryBuilder rangeQueryBuilder = Query.range(LATENCY);
             if (minDuration != 0) {
                 rangeQueryBuilder.gte(minDuration);
             }
             if (maxDuration != 0) {
                 rangeQueryBuilder.lte(maxDuration);
             }
-            mustQueryList.add(rangeQueryBuilder);
+            bool.must(rangeQueryBuilder);
         }
         if (StringUtil.isNotEmpty(serviceId)) {
-            mustQueryList.add(QueryBuilders.termQuery(SERVICE_ID, serviceId));
+            bool.must(Query.term(SERVICE_ID, serviceId));
         }
         if (StringUtil.isNotEmpty(serviceInstanceId)) {
-            mustQueryList.add(QueryBuilders.termQuery(SERVICE_INSTANCE_ID, serviceInstanceId));
+            bool.must(Query.term(SERVICE_INSTANCE_ID, serviceInstanceId));
         }
         if (!Strings.isNullOrEmpty(endpointId)) {
-            mustQueryList.add(QueryBuilders.termQuery(ENDPOINT_ID, endpointId));
+            bool.must(Query.term(ENDPOINT_ID, endpointId));
         }
         if (!Strings.isNullOrEmpty(traceId)) {
-            mustQueryList.add(QueryBuilders.termQuery(TRACE_ID, traceId));
+            bool.must(Query.term(TRACE_ID, traceId));
         }
         switch (traceState) {
             case ERROR:
-                mustQueryList.add(QueryBuilders.matchQuery(IS_ERROR, BooleanUtils.TRUE));
+                bool.must(Query.match(IS_ERROR, BooleanUtils.TRUE));
                 break;
             case SUCCESS:
-                mustQueryList.add(QueryBuilders.matchQuery(IS_ERROR, BooleanUtils.FALSE));
+                bool.must(Query.match(IS_ERROR, BooleanUtils.FALSE));
                 break;
         }
         if (CollectionUtils.isNotEmpty(tags)) {
-            BoolQueryBuilder tagMatchQuery = QueryBuilders.boolQuery();
+            BoolQueryBuilder tagMatchQuery = Query.bool();
             tags.forEach(tag -> {
-                tagMatchQuery.must(QueryBuilders.termQuery(TAGS, tag.toString()));
+                tagMatchQuery.must(Query.term(TAGS, tag.toString()));
             });
-            mustQueryList.add(tagMatchQuery);
+            bool.must(tagMatchQuery);
         }
 
+        final SearchBuilder search = Search.builder().query(bool);
         switch (queryOrder) {
             case BY_START_TIME:
-                sourceBuilder.sort(START_TIME, SortOrder.DESC);
+                search.sort(START_TIME, Sort.Order.DESC);
                 break;
             case BY_DURATION:
-                sourceBuilder.sort(LATENCY, SortOrder.DESC);
+                search.sort(LATENCY, Sort.Order.DESC);
                 break;
         }
-        sourceBuilder.size(limit);
-        sourceBuilder.from(from);
+        search.size(limit)
+              .from(from);
 
-        SearchResponse response = getClient().search(ZipkinSpanRecord.INDEX_NAME, sourceBuilder);
+        SearchResponse response = getClient().search(ZipkinSpanRecord.INDEX_NAME, search.build());
 
         TraceBrief traceBrief = new TraceBrief();
-        traceBrief.setTotal((int) response.getHits().getTotalHits().value);
+        traceBrief.setTotal(response.getHits().getTotal());
 
         for (SearchHit searchHit : response.getHits().getHits()) {
             BasicTrace basicTrace = new BasicTrace();
 
             final ZipkinSpanRecord zipkinSpanRecord = new ZipkinSpanRecord.Builder().storage2Entity(
-                searchHit.getSourceAsMap());
+                searchHit.getSource());
 
             basicTrace.setSegmentId(zipkinSpanRecord.getSpanId());
             basicTrace.setStart(String.valueOf((long) zipkinSpanRecord.getStartTime()));
@@ -175,19 +171,20 @@ public class ZipkinTraceQueryEs7DAO extends EsDAO implements ITraceQueryDAO {
     @Override
     public List<org.apache.skywalking.oap.server.core.query.type.Span> doFlexibleTraceQuery(
         String traceId) throws IOException {
-        SearchSourceBuilder sourceBuilder = SearchSourceBuilder.searchSource();
-        sourceBuilder.query(QueryBuilders.termQuery(TRACE_ID, traceId));
-        sourceBuilder.sort(START_TIME, SortOrder.ASC);
-        sourceBuilder.size(1000);
+        final SearchBuilder search =
+            Search.builder()
+                  .query(Query.term(TRACE_ID, traceId))
+                  .sort(START_TIME, Sort.Order.ASC)
+                  .size(1000);
 
-        SearchResponse response = getClient().search(ZipkinSpanRecord.INDEX_NAME, sourceBuilder);
+        SearchResponse response = getClient().search(ZipkinSpanRecord.INDEX_NAME, search.build());
 
         List<org.apache.skywalking.oap.server.core.query.type.Span> spanList = new ArrayList<>();
 
         for (SearchHit searchHit : response.getHits().getHits()) {
-            String serviceId = (String) searchHit.getSourceAsMap().get(SERVICE_ID);
-            String serviceInstanceId = (String) searchHit.getSourceAsMap().get(SERVICE_INSTANCE_ID);
-            String dataBinaryBase64 = (String) searchHit.getSourceAsMap().get(SegmentRecord.DATA_BINARY);
+            String serviceId = (String) searchHit.getSource().get(SERVICE_ID);
+            String serviceInstanceId = (String) searchHit.getSource().get(SERVICE_INSTANCE_ID);
+            String dataBinaryBase64 = (String) searchHit.getSource().get(SegmentRecord.DATA_BINARY);
             Span span = SpanBytesDecoder.PROTO3.decodeOne(Base64.getDecoder().decode(dataBinaryBase64));
 
             org.apache.skywalking.oap.server.core.query.type.Span swSpan = new org.apache.skywalking.oap.server.core.query.type.Span();

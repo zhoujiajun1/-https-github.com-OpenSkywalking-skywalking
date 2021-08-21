@@ -25,7 +25,6 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.apache.skywalking</groupId>
     <artifactId>tool-profile-snapshot-exporter-es7</artifactId>
     <version>8.8.0-SNAPSHOT</version>
 
@@ -33,12 +32,6 @@
         <dependency>
             <groupId>org.apache.skywalking</groupId>
             <artifactId>tool-profile-snapshot-bootstrap</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.skywalking</groupId>
-            <artifactId>storage-elasticsearch7-plugin</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

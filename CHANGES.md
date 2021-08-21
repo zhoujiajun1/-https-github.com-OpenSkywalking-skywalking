@@ -50,6 +50,7 @@ Release Notes.
 * Fix `LoggingConfigWatcher` return `watch.value` would not consistent with the real configuration content.
 * Fix `ZookeeperConfigWatcherRegister.readConfig()` could cause `NPE` when `data.getData()` is null.
 * Support nacos grouped dynamic configurations.
+* Rebuilt ElasticSearch client on top of their REST API and remove ElasticSearch High Level API.
 
 #### UI
 

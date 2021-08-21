@@ -22,10 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.skywalking.oap.server.core.CoreModule;
 import org.apache.skywalking.oap.server.core.storage.query.ITraceQueryDAO;
 import org.apache.skywalking.oap.server.library.module.ServiceNotProvidedException;
-import org.apache.skywalking.oap.server.storage.plugin.elasticsearch7.StorageModuleElasticsearch7Provider;
+import org.apache.skywalking.oap.server.storage.plugin.elasticsearch.StorageModuleElasticsearchProvider;
 
 @Slf4j
-public class ZipkinStorageModuleElasticsearchProvider extends StorageModuleElasticsearch7Provider {
+public class ZipkinStorageModuleElasticsearchProvider extends StorageModuleElasticsearchProvider {
 
     @Override
     public String name() {
@@ -35,7 +35,8 @@ public class ZipkinStorageModuleElasticsearchProvider extends StorageModuleElast
     @Override
     public void prepare() throws ServiceNotProvidedException {
         super.prepare();
-        final ZipkinTraceQueryEs7DAO traceQueryEsDAO = new ZipkinTraceQueryEs7DAO(elasticSearch7Client);
+        final ZipkinTraceQueryEs7DAO traceQueryEsDAO =
+            new ZipkinTraceQueryEs7DAO(elasticSearchClient);
         this.registerServiceImplementation(ITraceQueryDAO.class, traceQueryEsDAO);
     }
 
